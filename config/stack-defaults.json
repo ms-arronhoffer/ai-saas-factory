@@ -1,0 +1,103 @@
+{
+  "description": "Default SaaS technology stack the factory targets. Override per build via the requirements stage or the CLI --stack flag.",
+  "default": "nextjs-fastapi-postgres",
+  "stacks": {
+    "nextjs-fastapi-postgres": {
+      "label": "Next.js + FastAPI + Postgres",
+      "seed": "templates/nextjs-fastapi-postgres",
+      "languages": ["node", "python"],
+      "frontend": {
+        "framework": "Next.js (App Router, TypeScript)",
+        "styling": "Tailwind CSS",
+        "test": "vitest + @testing-library/react",
+        "dir": "web"
+      },
+      "backend": {
+        "framework": "FastAPI (Python 3.13)",
+        "orm": "SQLAlchemy 2.x + Alembic migrations",
+        "auth": "JWT (OAuth2 password flow) with passlib/bcrypt",
+        "test": "pytest + httpx",
+        "dir": "api"
+      },
+      "database": {
+        "engine": "PostgreSQL 18",
+        "local": "docker-compose service"
+      },
+      "infra": {
+        "containerization": "Dockerfile per service + docker-compose.yml",
+        "iac": "none (local-first); add later via azure-prepare"
+      },
+      "workstreams": [
+        { "id": "backend", "title": "FastAPI backend, models, migrations, auth", "dir": "api", "language": "python" },
+        { "id": "frontend", "title": "Next.js frontend, pages, API client, UI", "dir": "web", "language": "node" },
+        { "id": "infra", "title": "Dockerfiles, docker-compose, env, README", "dir": ".", "language": "mixed" }
+      ],
+      "run": {
+        "up": "docker compose up -d --build",
+        "down": "docker compose down -v",
+        "healthUrl": "http://localhost:8000/health",
+        "frontendUrl": "http://localhost:3000/",
+        "test": ["cd api && python -m pytest -q", "cd web && npm test --silent"],
+        "coverage": [
+          { "cmd": "cd api; python -m pip install -q coverage; python -m coverage run -m pytest -q && python -m coverage json -o coverage.json", "file": "api/coverage.json" },
+          { "cmd": "cd web && npx vitest run --coverage --coverage.reporter=json-summary", "file": "web/coverage/coverage-summary.json" }
+        ],
+        "mutation": "cd api && python -m mutmut run --paths-to-mutate app 2>&1; python -m mutmut results"
+      }
+    },
+    "node-express-react": {
+      "label": "Node/Express + React",
+      "seed": "templates/node-express-react",
+      "languages": ["node"],
+      "frontend": { "framework": "React (Vite, TypeScript)", "styling": "CSS Modules", "test": "vitest", "dir": "web" },
+      "backend": { "framework": "Express (TypeScript)", "orm": "Prisma", "auth": "JWT", "test": "vitest + supertest", "dir": "api" },
+      "database": { "engine": "PostgreSQL 18", "local": "docker-compose service" },
+      "infra": { "containerization": "Dockerfile per service + docker-compose.yml", "iac": "none" },
+      "workstreams": [
+        { "id": "backend", "title": "Express API, Prisma schema, auth", "dir": "api", "language": "node" },
+        { "id": "frontend", "title": "React SPA, routing, API client", "dir": "web", "language": "node" },
+        { "id": "infra", "title": "Dockerfiles, docker-compose, env, README", "dir": ".", "language": "node" }
+      ],
+      "run": {
+        "up": "docker compose up -d --build",
+        "down": "docker compose down -v",
+        "healthUrl": "http://localhost:8000/health",
+        "frontendUrl": "http://localhost:3000/",
+        "test": ["cd api && npm test --silent", "cd web && npm test --silent"],
+        "coverage": [
+          { "cmd": "cd api && npx vitest run --coverage --coverage.reporter=json-summary", "file": "api/coverage/coverage-summary.json" },
+          { "cmd": "cd web && npx vitest run --coverage --coverage.reporter=json-summary", "file": "web/coverage/coverage-summary.json" }
+        ],
+        "mutation": "cd api && npx stryker run"
+      }
+    },
+    "fastapi-postgres-api": {
+      "label": "FastAPI + Postgres (API-only backend)",
+      "seed": "templates/fastapi-postgres-api",
+      "languages": ["python"],
+      "backend": {
+        "framework": "FastAPI (Python 3.13)",
+        "orm": "SQLAlchemy 2.x + Alembic migrations",
+        "auth": "JWT (OAuth2 password flow) with passlib/bcrypt",
+        "test": "pytest + httpx",
+        "dir": "."
+      },
+      "database": { "engine": "PostgreSQL 18", "local": "docker-compose service" },
+      "infra": { "containerization": "Dockerfile + docker-compose.yml", "iac": "none" },
+      "workstreams": [
+        { "id": "api", "title": "FastAPI app, models, migrations, auth, OpenAPI", "dir": ".", "language": "python" },
+        { "id": "infra", "title": "Dockerfile, docker-compose, env, README", "dir": ".", "language": "python" }
+      ],
+      "run": {
+        "up": "docker compose up -d --build",
+        "down": "docker compose down -v",
+        "healthUrl": "http://localhost:8000/health",
+        "test": ["python -m pytest -q"],
+        "coverage": [
+          { "cmd": "python -m pip install -q coverage; python -m coverage run -m pytest -q && python -m coverage json -o coverage.json", "file": "coverage.json" }
+        ],
+        "mutation": "python -m mutmut run --paths-to-mutate app 2>&1; python -m mutmut results"
+      }
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "description": "Compliance-by-design profiles. Selecting a profile injects its controls into requirements, architecture and every builder prompt, and drives a compliance-audit pass that produces a control-to-implementation matrix (COMPLIANCE.md). Controls are intentionally concise and buildable; they are guidance for the agents, not a substitute for a formal audit.",
+  "profiles": {
+    "pci-dss": {
+      "label": "PCI-DSS v4.0 (payment card data)",
+      "summary": "Controls for handling payment card data.",
+      "controls": [
+        { "id": "pci-no-pan-storage", "title": "Do not store PAN", "requirement": "Never persist full primary account numbers; tokenize via a payment provider (e.g. Stripe) and store only tokens." },
+        { "id": "pci-encrypt-transit", "title": "Encrypt cardholder data in transit", "requirement": "Enforce TLS 1.2+ everywhere; HSTS enabled; no plaintext transport." },
+        { "id": "pci-encrypt-rest", "title": "Encrypt sensitive data at rest", "requirement": "Encrypt any stored sensitive data at rest (DB/disk encryption)." },
+        { "id": "pci-access-control", "title": "Least-privilege access", "requirement": "Role-based access control; unique accounts; no shared admin credentials." },
+        { "id": "pci-audit-logging", "title": "Audit trails", "requirement": "Log access to cardholder-data functions with user, timestamp and action; protect logs from tampering." },
+        { "id": "pci-no-secrets", "title": "No hardcoded secrets", "requirement": "Keys and credentials from a secrets manager/env, never committed." }
+      ]
+    },
+    "hipaa": {
+      "label": "HIPAA (protected health information)",
+      "summary": "Safeguards for PHI (US healthcare).",
+      "controls": [
+        { "id": "hipaa-encrypt", "title": "Encrypt PHI in transit and at rest", "requirement": "TLS in transit; encryption at rest for all PHI fields/stores." },
+        { "id": "hipaa-access", "title": "Access controls & unique IDs", "requirement": "Unique user identification, RBAC, automatic session timeout/logoff." },
+        { "id": "hipaa-audit", "title": "Audit controls", "requirement": "Record and examine access/activity on PHI; tamper-evident audit log." },
+        { "id": "hipaa-min-necessary", "title": "Minimum necessary", "requirement": "Expose only the minimum PHI needed; no PHI in logs, URLs or analytics." },
+        { "id": "hipaa-integrity", "title": "Integrity", "requirement": "Protect PHI from improper alteration/destruction; validation and referential integrity." },
+        { "id": "hipaa-baa", "title": "Business Associate Agreements", "requirement": "Document that any third-party processor handling PHI requires a BAA (note in COMPLIANCE.md)." }
+      ]
+    },
+    "soc2": {
+      "label": "SOC 2 (Trust Services Criteria)",
+      "summary": "Security, availability, confidentiality controls.",
+      "controls": [
+        { "id": "soc2-access", "title": "Logical access controls", "requirement": "Authentication, RBAC, least privilege, MFA hooks for privileged actions." },
+        { "id": "soc2-encryption", "title": "Encryption", "requirement": "Encrypt data in transit (TLS) and sensitive data at rest." },
+        { "id": "soc2-audit", "title": "Monitoring & audit logging", "requirement": "Centralized structured logs, audit trail of security-relevant events." },
+        { "id": "soc2-change", "title": "Change management", "requirement": "CI with automated tests and security scans gating merges." },
+        { "id": "soc2-availability", "title": "Availability", "requirement": "Health checks, graceful error handling, backups/retention documented." },
+        { "id": "soc2-secrets", "title": "Secret management", "requirement": "Secrets from a vault/managed identity; none in source." }
+      ]
+    },
+    "gdpr": {
+      "label": "GDPR (EU data protection)",
+      "summary": "Lawful, minimal, user-controlled personal-data processing.",
+      "controls": [
+        { "id": "gdpr-minimization", "title": "Data minimization", "requirement": "Collect only necessary personal data; document purpose per field." },
+        { "id": "gdpr-consent", "title": "Consent & cookie banner", "requirement": "Consent capture for optional processing; cookie banner; privacy policy page." },
+        { "id": "gdpr-erasure", "title": "Right to erasure & export", "requirement": "Endpoints to export and delete a user's personal data (right to be forgotten)." },
+        { "id": "gdpr-encryption", "title": "Security of processing", "requirement": "Encrypt personal data in transit and at rest; pseudonymize where possible." },
+        { "id": "gdpr-retention", "title": "Retention limits", "requirement": "Configurable retention and automatic purge of expired personal data." },
+        { "id": "gdpr-breach", "title": "Audit & breach readiness", "requirement": "Access logs for personal data to support breach notification." }
+      ]
+    },
+    "iso27001": {
+      "label": "ISO/IEC 27001 (ISMS controls)",
+      "summary": "Baseline information-security controls.",
+      "controls": [
+        { "id": "iso-access", "title": "Access control", "requirement": "RBAC, least privilege, strong authentication, session management." },
+        { "id": "iso-crypto", "title": "Cryptography", "requirement": "TLS in transit; encryption at rest; documented key management." },
+        { "id": "iso-logging", "title": "Logging & monitoring", "requirement": "Event logging, protection of log information, clock synchronization." },
+        { "id": "iso-secure-dev", "title": "Secure development", "requirement": "Input validation, secure defaults, dependency and SAST scanning in CI." },
+        { "id": "iso-secrets", "title": "Secrets & key management", "requirement": "No secrets in code; managed secret storage." },
+        { "id": "iso-backup", "title": "Backup & resilience", "requirement": "Backup strategy and health checks documented." }
+      ]
+    }
+  }
+}

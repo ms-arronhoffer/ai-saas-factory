@@ -1,0 +1,29 @@
+{
+  "name": "ai-saas-factory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local multi-agent factory that turns an idea into a security-hardened SaaS app and pushes it to GitHub, powered by the GitHub Copilot SDK (Claude Opus / Sonnet).",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/cli",
+    "packages/web"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "watch": "tsc -b --watch",
+    "typecheck": "tsc -b --noEmit || tsc -b",
+    "factory": "node packages/cli/dist/index.js",
+    "doctor": "node packages/cli/dist/index.js doctor",
+    "serve": "node packages/web/dist/server.js",
+    "smoke": "node packages/core/dist/smoke.js",
+    "smoke:pipeline": "node packages/core/dist/pipeline.smoke.js",
+    "test": "npm run smoke && npm run smoke:pipeline"
+  },
+  "author": "",
+  "license": "MIT"
+}

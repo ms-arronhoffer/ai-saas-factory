@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      real_build:
+        description: "Run a real end-to-end factory build (requires Copilot auth secret)"
+        type: boolean
+        default: false
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Offline smoke (pure functions)
+        run: npm run smoke
+      - name: Offline pipeline integration test (mock runtime)
+        run: npm run smoke:pipeline
+
+  # Gated, opt-in real build. Never runs automatically; requires a manual
+  # dispatch and a Copilot token secret. Proves the factory truly ships a repo.
+  real-build:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.real_build }}
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.FACTORY_COPILOT_TOKEN }}
+      FACTORY_GATES: none
+      FACTORY_OFFLINE: "true" # don't create a public repo from CI by default
+      FACTORY_VERIFY: "true"
+      FACTORY_DELIVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Real minimal build (offline publish)
+        run: node packages/cli/dist/index.js new "A minimal URL shortener" --yes --scale startup

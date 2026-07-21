@@ -1,0 +1,65 @@
+{
+  "description": "Business-layer SaaS capabilities. Selecting one injects its guidance into the architect and builder prompts so the generated app is a real, sellable SaaS — not just an app. Select per build via --saas or the dashboard.",
+  "capabilities": {
+    "billing": {
+      "label": "Billing & monetization",
+      "guidance": [
+        "Stripe subscriptions with at least two priced plans + a free tier; checkout and a customer billing portal",
+        "Usage metering hooks for metered features; webhook handling for invoice/payment events",
+        "Entitlement checks gate premium features; handle dunning/past-due gracefully",
+        "Never store raw card data; use Stripe tokens/Checkout"
+      ]
+    },
+    "multitenancy": {
+      "label": "Multi-tenancy & identity",
+      "guidance": [
+        "Organizations/teams with membership and roles (owner/admin/member); every tenant-owned row is scoped by org_id",
+        "Enforce tenant isolation in every query; no cross-tenant data access",
+        "Invite flow; SSO-ready auth (OAuth/OIDC) with a path to SAML/SCIM for enterprise",
+        "Per-tenant settings and a tenant switcher in the UI"
+      ]
+    },
+    "growth": {
+      "label": "Growth engineering",
+      "guidance": [
+        "Marketing landing page with SEO meta/OG/sitemap and clear CTAs",
+        "Onboarding funnel with activation steps and sample/demo data",
+        "Lifecycle email hooks (welcome, activation, re-engagement) behind an email interface",
+        "Privacy-respecting product analytics + a feature-flag-based A/B experiment mechanism"
+      ]
+    },
+    "support": {
+      "label": "Support surface",
+      "guidance": [
+        "Status/health page, a CHANGELOG.md updated per release, and an in-app help/KB section",
+        "In-app feedback capture that files into the backlog",
+        "Clear, actionable error messages and a documented support contact"
+      ]
+    },
+    "deepQa": {
+      "label": "Deeper QA",
+      "guidance": [
+        "End-to-end tests across the primary browser (Playwright) covering core flows",
+        "Visual regression snapshots for key screens",
+        "A load/soak test (k6) for the hottest endpoints and a documented performance budget",
+        "Basic chaos/resilience check (dependency down → graceful degradation)"
+      ]
+    },
+    "provenance": {
+      "label": "Supply-chain provenance",
+      "guidance": [
+        "Generate and commit an SBOM (CycloneDX); diff it across releases in CI",
+        "Sign build artifacts/images (cosign) and produce SLSA provenance attestation in CI",
+        "Pin dependencies and commit lockfiles for reproducible builds"
+      ]
+    },
+    "continuousDelivery": {
+      "label": "Continuous delivery",
+      "guidance": [
+        "Zero-downtime deploys: expand/contract DB migrations, health-gated rollouts",
+        "Progressive delivery: canary or blue-green with automatic rollback on health regression",
+        "Feature flags for gradual feature rollout and kill-switches"
+      ]
+    }
+  }
+}

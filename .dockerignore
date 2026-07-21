@@ -1,0 +1,31 @@
+# Build context excludes — keep the image lean and the build reproducible.
+.git
+.gitignore
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+**/.turbo
+
+# Factory runtime state + generated apps (never bake these into the image)
+.factory
+workspaces
+evals
+*.log
+backend-logs.txt
+transcripts
+
+# Local env / secrets — pass these at runtime, never in a layer
+.env
+.env.*
+!.env.example
+
+# Editor / OS cruft
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Docs/media not needed at runtime
+*.mp4
+*.mov
+tmp-*

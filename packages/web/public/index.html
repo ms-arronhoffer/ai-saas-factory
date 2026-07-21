@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI SaaS Factory</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <span class="logo">⚙️</span>
+        <div>
+          <h1>AI SaaS Factory</h1>
+          <p class="sub">idea → requirements → build → test → harden → ship</p>
+        </div>
+      </div>
+      <div id="doctor" class="doctor" title="environment status"></div>
+    </header>
+
+    <main>
+      <section class="panel new-run">
+        <h2>New build</h2>
+        <form id="new-run-form">
+          <textarea id="idea" rows="3" placeholder="Describe the SaaS app to build, e.g. 'A team retro board with boards, cards, voting, and Google login.'"></textarea>
+          <textarea id="refs" rows="2" placeholder="Optional: URLs of comparable apps to match feature parity with — one per line"></textarea>
+          <div id="compliance" class="compliance"></div>
+          <div id="saas" class="compliance"></div>
+          <div class="row">
+            <select id="stack"></select>
+            <select id="scale" title="deployment scale"></select>
+            <label class="auto"><input type="checkbox" id="auto" /> auto-approve gates</label>
+            <button type="submit">Start factory</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel templates">
+        <h2>Golden templates</h2>
+        <p class="sub">Runnable starter apps each build extends. Click one to select its stack.</p>
+        <ul id="templates"></ul>
+      </section>
+
+      <div class="columns">
+        <section class="panel runs">
+          <h2>Runs</h2>
+          <ul id="runs"></ul>
+        </section>
+
+        <section class="panel detail">
+          <div class="detail-head">
+            <h2 id="detail-title">Select a run</h2>
+            <a id="repo-link" class="repo" target="_blank" rel="noreferrer"></a>
+          </div>
+          <div id="gate" class="gate hidden"></div>
+          <ol id="stages" class="stages"></ol>
+          <div class="log-head">
+            <h3>Live activity</h3>
+            <button id="clear-log" type="button">clear</button>
+          </div>
+          <pre id="log" class="log"></pre>
+        </section>
+      </div>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

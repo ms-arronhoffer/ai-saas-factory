@@ -1,0 +1,20 @@
+# Local dev stack. The API defaults to SQLite (zero-infra); switch the Prisma
+# datasource to postgresql and add a db service for growth/scale deployments.
+services:
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: file:./dev.db
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-prod}
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+
+  web:
+    build: ./web
+    environment:
+      VITE_API_URL: http://localhost:8000
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"

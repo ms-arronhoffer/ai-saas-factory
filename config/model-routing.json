@@ -1,0 +1,59 @@
+{
+  "$schema": "./model-routing.schema.json",
+  "description": "Maps factory agent roles to a Copilot model tier, then to an ordered list of preferred model IDs. At startup the model router calls the SDK's model list and picks the first available ID per tier. Unknown IDs are skipped; if none match, the fallback is used.",
+  "tiers": {
+    "deep": {
+      "description": "Deep reasoning: requirements, architecture, integration, security review.",
+      "preferred": [
+        "claude-opus-4.8",
+        "claude-opus-4.6",
+        "claude-opus-4.5",
+        "claude-opus-4.1",
+        "claude-opus-4",
+        "gpt-5"
+      ],
+      "reasoningEffort": "high",
+      "fallback": "claude-opus-4.5"
+    },
+    "fast": {
+      "description": "High-volume code generation and test authoring (parallel builders).",
+      "preferred": [
+        "claude-sonnet-5",
+        "claude-sonnet-5.0",
+        "claude-sonnet-4.5",
+        "claude-sonnet-4",
+        "gpt-5-mini",
+        "gpt-5"
+      ],
+      "reasoningEffort": "medium",
+      "fallback": "claude-sonnet-4.5"
+    }
+  },
+  "roles": {
+    "researcher": "deep",
+    "painfinder": "deep",
+    "pm": "deep",
+    "interrogator": "deep",
+    "requirements": "deep",
+    "analyst": "deep",
+    "innovator": "deep",
+    "compliance": "deep",
+    "architect": "deep",
+    "critic": "deep",
+    "designer": "deep",
+    "builder": "fast",
+    "reviewer": "deep",
+    "integrator": "deep",
+    "verifier": "fast",
+    "test": "fast",
+    "security": "deep",
+    "devops": "deep",
+    "copywriter": "fast",
+    "evaluator": "deep",
+    "release": "fast",
+    "triage": "fast",
+    "sre": "deep",
+    "em": "deep",
+    "estimator": "deep"
+  }
+}

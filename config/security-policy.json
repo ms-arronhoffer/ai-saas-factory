@@ -1,0 +1,88 @@
+{
+  "description": "Thresholds and tool configuration for the security-hardening stage. The stage runs the enabled scanners, evaluates findings against these gates, and loops a fix sub-agent until the gates pass or maxFixIterations is reached.",
+  "maxFixIterations": 3,
+  "gates": {
+    "maxCritical": 0,
+    "maxHigh": 0,
+    "maxSecrets": 0,
+    "allowDependencyHigh": false,
+    "maxDeniedLicenses": 0,
+    "maxIacHigh": 0
+  },
+  "licensePolicy": {
+    "deny": ["GPL-2.0", "GPL-3.0", "AGPL-3.0", "LGPL-3.0", "SSPL-1.0", "BUSL-1.1", "CC-BY-NC-4.0"],
+    "flagUnknown": false
+  },
+  "scanners": {
+    "semgrep": {
+      "enabled": true,
+      "command": "semgrep --config auto --json --quiet .",
+      "installHint": "pipx install semgrep  (or)  pip install semgrep",
+      "severityField": "extra.severity",
+      "kind": "sast"
+    },
+    "bandit": {
+      "enabled": true,
+      "command": "bandit -r . -f json -q",
+      "installHint": "pip install bandit",
+      "appliesTo": ["python"],
+      "kind": "sast"
+    },
+    "npm-audit": {
+      "enabled": true,
+      "command": "npm audit --json",
+      "installHint": "bundled with npm",
+      "appliesTo": ["node"],
+      "kind": "dependency"
+    },
+    "pip-audit": {
+      "enabled": true,
+      "command": "pip-audit -f json",
+      "installHint": "pip install pip-audit",
+      "appliesTo": ["python"],
+      "kind": "dependency"
+    },
+    "gitleaks": {
+      "enabled": true,
+      "command": "gitleaks detect --no-git -f json -r gitleaks-report.json",
+      "installHint": "https://github.com/gitleaks/gitleaks#installing",
+      "kind": "secret"
+    },
+    "trivy": {
+      "enabled": true,
+      "command": "trivy fs --quiet --format json --scanners vuln,secret,misconfig .",
+      "installHint": "https://aquasecurity.github.io/trivy/latest/getting-started/installation/",
+      "kind": "container"
+    },
+    "syft": {
+      "enabled": true,
+      "command": "syft . -o cyclonedx-json=sbom.cdx.json -q",
+      "installHint": "https://github.com/anchore/syft#installation",
+      "kind": "sbom"
+    },
+    "checkov": {
+      "enabled": true,
+      "command": "checkov -d . -o json --compact --quiet",
+      "installHint": "pip install checkov",
+      "kind": "iac"
+    },
+    "zap": {
+      "enabled": false,
+      "command": "zap-baseline.py -t http://localhost:3000 -J zap-report.json",
+      "installHint": "https://www.zaproxy.org/docs/docker/baseline-scan/ (requires the app running)",
+      "kind": "dast"
+    }
+  },
+  "llmReview": {
+    "enabled": true,
+    "focus": [
+      "authentication and authorization gaps",
+      "injection (SQL/command/template)",
+      "secrets or credentials committed to source",
+      "insecure deserialization",
+      "missing input validation at trust boundaries",
+      "OWASP Top 10 coverage",
+      "insecure defaults in infrastructure and Dockerfiles"
+    ]
+  }
+}

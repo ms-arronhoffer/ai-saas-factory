@@ -1,0 +1,165 @@
+openapi: 3.1.0
+info:
+  title: SaaS Factory Starter
+  version: 0.1.0
+  description: >
+    Frozen contract for the starter vertical slice. Extend this alongside the
+    SQLAlchemy models and the frontend client when adding features.
+servers:
+  - url: http://localhost:8000
+paths:
+  /health:
+    get:
+      tags: [ops]
+      summary: Liveness probe
+      responses:
+        "200": { description: OK }
+  /ready:
+    get:
+      tags: [ops]
+      summary: Readiness probe
+      responses:
+        "200": { description: Ready }
+  /api/auth/register:
+    post:
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserRead" }
+        "409": { description: Email already registered }
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Obtain an access token (OAuth2 password flow)
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                password: { type: string }
+              required: [username, password]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Token" }
+        "401": { description: Incorrect email or password }
+  /api/items:
+    get:
+      tags: [items]
+      summary: List the current user's items
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ItemRead" }
+    post:
+      tags: [items]
+      summary: Create an item
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ItemCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ItemRead" }
+  /api/items/{item_id}:
+    parameters:
+      - name: item_id
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [items]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ItemRead" }
+        "404": { description: Not found }
+    patch:
+      tags: [items]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ItemUpdate" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ItemRead" }
+    delete:
+      tags: [items]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Deleted }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserCreate:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8, maxLength: 128 }
+      required: [email, password]
+    UserRead:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string, format: email }
+        created_at: { type: string, format: date-time }
+    Token:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, default: bearer }
+    ItemCreate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 5000 }
+      required: [title]
+    ItemUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 5000 }
+    ItemRead:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        owner_id: { type: integer }
+        created_at: { type: string, format: date-time }

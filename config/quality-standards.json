@@ -1,0 +1,74 @@
+{
+  "description": "Cross-cutting quality standards baked into every generated app. Enabled standards are threaded into architect/builder prompts and, where a deterministic check exists, enforced in the verify/security stages. Toggle individual standards off to reduce scope.",
+  "standards": {
+    "accessibility": {
+      "enabled": true,
+      "label": "Accessibility (WCAG 2.2 AA)",
+      "guidance": [
+        "Semantic HTML, labelled form controls, alt text, keyboard navigation, visible focus states, sufficient colour contrast",
+        "Respect prefers-reduced-motion; ARIA only where semantics are insufficient"
+      ],
+      "check": "npx --yes @axe-core/cli http://localhost:3000 || true"
+    },
+    "performance": {
+      "enabled": true,
+      "label": "Performance budgets (Core Web Vitals)",
+      "guidance": [
+        "Code-split, lazy-load, cache; keep initial JS lean; server-render where possible",
+        "Target LCP < 2.5s, CLS < 0.1, INP < 200ms"
+      ]
+    },
+    "observability": {
+      "enabled": true,
+      "label": "Observability",
+      "guidance": [
+        "Structured JSON logs with correlation ids; no secrets/PII in logs",
+        "/health (liveness) and /ready (readiness) endpoints",
+        "OpenTelemetry traces + basic metrics; error tracking hook (e.g. Sentry) behind env var"
+      ]
+    },
+    "ux": {
+      "enabled": true,
+      "label": "UX polish",
+      "guidance": [
+        "Responsive layout, dark mode, consistent design tokens/component library",
+        "Explicit empty, loading and error states; helpful onboarding and seed/demo data",
+        "Accessible, consistent forms with inline validation"
+      ]
+    },
+    "i18n": {
+      "enabled": true,
+      "label": "Internationalization & SEO",
+      "guidance": [
+        "Externalize user-facing strings for i18n; sensible default locale",
+        "SEO meta + Open Graph tags, sitemap.xml, robots.txt; PWA manifest where relevant"
+      ]
+    },
+    "product": {
+      "enabled": true,
+      "label": "Product capabilities",
+      "guidance": [
+        "Feature-flag mechanism (env or config driven)",
+        "Privacy-respecting analytics hook (disabled by default)",
+        "Transactional email/notification abstraction behind an interface"
+      ]
+    },
+    "testing": {
+      "enabled": true,
+      "label": "Testing depth",
+      "guidance": [
+        "Unit + integration tests with an ephemeral DB; contract alignment between frontend and backend",
+        "At least one end-to-end happy-path test (Playwright) and a smoke test",
+        "Coverage threshold configured (>= 60% lines) in the test runner"
+      ]
+    },
+    "data": {
+      "enabled": true,
+      "label": "Data handling",
+      "guidance": [
+        "Tag entity fields that are PII/PHI/PCI and handle them with encryption/field-level care",
+        "Database migrations (not auto-create) + seed script; documented backup/retention"
+      ]
+    }
+  }
+}

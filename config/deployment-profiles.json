@@ -1,0 +1,54 @@
+{
+  "description": "Deployment scale profiles. The selected profile shapes the architecture stage (topology, data, scaling decisions) and the delivery stage (which IaC/hosting to generate) without changing the app's core logic. Select per run with --scale, the dashboard, or FACTORY_SCALE.",
+  "default": "startup",
+  "profiles": {
+    "startup": {
+      "label": "Startup (cheapest, fastest to ship)",
+      "summary": "Single small footprint, minimal ops, optimised for cost and speed to first customers.",
+      "architecture": [
+        "Keep it a simple modular monolith; avoid premature microservices",
+        "One database (managed Postgres, small/burstable tier); no read replicas",
+        "Synchronous request handling; background work only if essential",
+        "Basic structured logging and a health endpoint"
+      ],
+      "delivery": [
+        "Single container app (Azure Container Apps consumption, or App Service B1)",
+        "Managed Postgres (Flexible Server, Burstable B1ms) with automated backups",
+        "One environment (prod) + a preview on PRs; secrets via env/managed identity",
+        "Minimal IaC: one Bicep file + azure.yaml for azd up"
+      ]
+    },
+    "growth": {
+      "label": "Growth (scaling users, resilient)",
+      "summary": "Autoscaling, staging environment, caching and real observability for a product finding traction.",
+      "architecture": [
+        "Modular monolith with clear seams; extract a worker only for clearly async jobs",
+        "Managed Postgres (General Purpose) with backups + point-in-time restore; connection pooling (PgBouncer)",
+        "Add Redis for caching/sessions and a job queue for async work",
+        "Rate limiting on public endpoints; OpenTelemetry traces + metrics + alerts"
+      ],
+      "delivery": [
+        "Azure Container Apps with autoscale (KEDA rules), min 1 / max N replicas",
+        "Redis (Azure Managed Redis) and a queue (Service Bus or Storage Queue)",
+        "dev / staging / prod environments; CI/CD gates (tests + scans) before deploy",
+        "Modular Bicep; App Insights + Log Analytics wired in"
+      ]
+    },
+    "scale": {
+      "label": "Large scale (high availability, enterprise)",
+      "summary": "Zone-redundant, horizontally scaled, DR-ready architecture for large or regulated workloads.",
+      "architecture": [
+        "Clear service/worker separation; async-first for heavy paths; idempotent handlers",
+        "Postgres with read replicas + pooling; caching tiers; consider partitioning/sharding for hot tables",
+        "CDN for static assets; API gateway with rate limiting, WAF and auth at the edge",
+        "Full observability (traces/metrics/logs/SLOs), graceful degradation and circuit breakers"
+      ],
+      "delivery": [
+        "Azure Container Apps (multi-replica, zone-redundant) or AKS if orchestration is needed",
+        "Zone-redundant Postgres + read replicas; Managed Redis (clustered); Service Bus",
+        "Front Door/CDN + WAF; multi-region or documented DR/runbook and backups",
+        "Modularised Bicep/Terraform, network isolation (VNet + private endpoints), Key Vault for all secrets"
+      ]
+    }
+  }
+}
