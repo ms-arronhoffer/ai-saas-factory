@@ -1,52 +1,66 @@
 # Run the AI SaaS Factory as a standalone server (dashboard + REST + webhook)
-# plus, optionally, scale-out queue workers. Linux host recommended.
+# plus, optionally, scale-out queue workers. Runs on a Windows OR Linux host.
 #
-#   docker compose up -d --build          # start the server on :7788
+#   docker compose build
+#   docker compose run --rm factory login   # one-time: HTTPS device-flow GitHub/Copilot login
+#   docker compose up -d                     # start the server on http://localhost:7788
 #   docker compose run --rm factory new "an idea" --stack fastapi-postgres-api --yes
-#   docker compose --profile workers up -d # add a background worker
+#   docker compose --profile workers up -d   # add background worker(s)
 #
-# AUTH — provide ONE of:
-#   1) export GITHUB_TOKEN=...  (a token carrying the 'copilot' scope), or
-#   2) mount your existing gh login (the ${HOME}/.config/gh bind below).
-#      Create it once on the host:  gh auth login && gh auth refresh --scopes copilot
+# AUTH (works the same on Windows and Linux) — do ONE of:
+#   1) In-container HTTPS login (recommended, host-agnostic):
+#        docker compose run --rm factory login
+#      Opens a github.com/login/device code flow, requests the 'copilot' scope,
+#      and persists the token to the `gh-config` named volume. The entrypoint then
+#      derives GITHUB_TOKEN from it automatically on every start.
+#   2) Inject a token directly (no mounted host config — avoids the Windows/macOS
+#      keyring problem where ~/.config/gh holds no usable token):
+#        PowerShell:  $env:GITHUB_TOKEN = (gh auth token); docker compose up -d
+#        bash:        GITHUB_TOKEN=$(gh auth token) docker compose up -d
 #
-# DOCKER — the factory drives Docker for verify/deploy/ZAP. This compose file uses
-# the SOCKET-MOUNT model: generated app containers are siblings of the factory on
-# the host daemon. `network_mode: host` makes the verify probe's localhost:8000/:3000
-# reach them, and the identical /var/lib/factory bind keeps build-context paths in
-# sync between the container and the host daemon. (See the dind alternative at the end.)
+# DOCKER — the factory drives Docker for the verify/deploy/ZAP stages. The socket
+# mount below works on Linux and on Docker Desktop (WSL2 backend). The server, CLI,
+# auth, and scanners are fully cross-platform. Running generated apps *in-container*
+# and probing them on localhost additionally needs host networking, which is
+# LINUX-ONLY — see the "Linux full-build" note under the service.
 
 services:
   factory:
     build: .
     image: ai-saas-factory:latest
-    # Host networking so verify/health probes (localhost:PORT) reach sibling app
-    # containers built through the mounted daemon. Linux only; on Docker Desktop
-    # use the dind profile instead.
-    network_mode: host
+    ports:
+      - "7788:7788"
     environment:
       FACTORY_WEB_HOST: 0.0.0.0
       FACTORY_WEB_PORT: "7788"
       FACTORY_DATA_DIR: /var/lib/factory/.factory
       FACTORY_WORKSPACES_DIR: /var/lib/factory/workspaces
-      # Auth option 1: a token with the 'copilot' scope (leave empty to use the mounted gh login).
+      # Optional: inject a token with the 'copilot' scope. Leave empty to use the
+      # in-container `login` (its token lives on the gh-config volume).
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
-      # Where pushes go (only used when not offline).
       FACTORY_GITHUB_OWNER: ${FACTORY_GITHUB_OWNER:-}
       FACTORY_REPO_VISIBILITY: ${FACTORY_REPO_VISIBILITY:-private}
-      # Set true to skip all GitHub push (Copilot-only runs).
       FACTORY_OFFLINE: ${FACTORY_OFFLINE:-false}
       # Keep cloud deploy off unless you also mount cloud creds (azd/aws).
       FACTORY_DEPLOY: ${FACTORY_DEPLOY:-false}
       FACTORY_CLOUD: ${FACTORY_CLOUD:-none}
     volumes:
-      # Run Docker (verify/delivery/Trivy/ZAP) via the host daemon.
+      # Drive Docker (verify/delivery/Trivy/ZAP). Works on Linux + Docker Desktop (WSL2).
       - /var/run/docker.sock:/var/run/docker.sock
-      # IDENTICAL host<->container path so the daemon can read each build context.
-      - /var/lib/factory:/var/lib/factory
-      # Auth option 2: reuse your host gh + copilot login (read-only).
-      - ${HOME}/.config/gh:/root/.config/gh:ro
+      # Persistent state + generated apps (named volume -> host-agnostic).
+      - factory-data:/var/lib/factory
+      # Persisted GitHub/Copilot login from `docker compose run --rm factory login`.
+      - gh-config:/root/.config/gh
     restart: unless-stopped
+    # --- Linux full-build note ---------------------------------------------
+    # To run generated apps IN-CONTAINER and let the verify probe reach them on
+    # localhost:8000/:3000, run on a LINUX host and add BOTH of these (host
+    # networking + an identical build-context path the host daemon can read):
+    #     network_mode: host
+    #     volumes:
+    #       - /var/lib/factory:/var/lib/factory   # replaces the factory-data volume
+    # On Docker Desktop (Windows/macOS) host networking is unavailable; use the
+    # dind profile below for those stages, or run them on a Linux host.
 
   # Optional: background worker(s) that drain the job queue. Scale with --scale.
   worker:
@@ -54,7 +68,6 @@ services:
     image: ai-saas-factory:latest
     profiles: ["workers"]
     command: ["worker"]
-    network_mode: host
     environment:
       FACTORY_DATA_DIR: /var/lib/factory/.factory
       FACTORY_WORKSPACES_DIR: /var/lib/factory/workspaces
@@ -62,15 +75,18 @@ services:
       FACTORY_OFFLINE: ${FACTORY_OFFLINE:-false}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/factory:/var/lib/factory
-      - ${HOME}/.config/gh:/root/.config/gh:ro
+      - factory-data:/var/lib/factory
+      - gh-config:/root/.config/gh
     restart: unless-stopped
 
+volumes:
+  factory-data:
+  gh-config:
+
 # ---------------------------------------------------------------------------
-# ALTERNATIVE: Docker-in-Docker (stronger isolation; works off Docker Desktop).
+# ALTERNATIVE: Docker-in-Docker (stronger isolation; identical on Windows/Linux).
 # Trade-off: generated apps run on the dind network, so the verify health probe's
-# `localhost:PORT` will NOT reach them without making the probe host configurable.
-# Prefer the socket-mount model above unless you need full isolation.
+# `localhost:PORT` will not reach them without making the probe host configurable.
 #
 #   services:
 #     dind:
@@ -89,6 +105,5 @@ services:
 #       ports: ["7788:7788"]
 #       volumes:
 #         - factory-data:/var/lib/factory
-#   volumes:
-#     factory-data:
+#         - gh-config:/root/.config/gh
 # ---------------------------------------------------------------------------

@@ -389,30 +389,37 @@ drains the queue.
 A self-contained image runs the factory as a **standalone server** *and* as a
 **one-shot CLI**, with every scanner (`semgrep`, `bandit`, `pip-audit`,
 `checkov`, `gitleaks`, `trivy`, `syft`, plus `npm-audit`) baked in — nothing is
-skipped. ZAP (DAST) runs as a pulled container.
+skipped. ZAP (DAST) runs as a pulled container. The **server, CLI, auth, and
+scanners run on a Windows or Linux host**; only running generated apps
+*in-container* during verify is Linux-optimized (see below).
 
 Because the factory itself drives Docker (verify/deploy/ZAP), the container needs
-a Docker daemon. The provided [`docker-compose.yml`](docker-compose.yml) uses the
-**socket-mount** model (Linux host): app containers are built as siblings on the
-host daemon, `network_mode: host` lets the verify probe reach them on
-`localhost`, and an identical `/var/lib/factory` bind keeps build-context paths in
-sync. A **dind** alternative (stronger isolation) is documented at the bottom of
-the compose file.
+a Docker daemon — the mounted socket in [`docker-compose.yml`](docker-compose.yml)
+works on Linux and on Docker Desktop (WSL2). Auth and state use **named volumes**
+so nothing depends on host paths.
 
-**Auth** — provide one of:
-- `GITHUB_TOKEN` carrying the `copilot` scope (from `gh auth refresh --scopes copilot`), or
-- your host `gh` login mounted read-only (the `~/.config/gh` bind in the compose file).
+**Auth (host-agnostic)** — the host's `gh` login often can't be reused because
+Windows/macOS store the token in the **OS keyring**, so a mounted `~/.config/gh`
+carries no token. Instead, do one of:
+
+```bash
+# 1) Authenticate over HTTPS INSIDE the container (device flow, 'copilot' scope).
+#    Persists to the gh-config volume; the entrypoint auto-derives GITHUB_TOKEN.
+docker compose run --rm factory login
+
+# 2) …or inject a token directly (no mounted config):
+#    PowerShell:  $env:GITHUB_TOKEN = (gh auth token); docker compose up -d
+#    bash:        GITHUB_TOKEN=$(gh auth token) docker compose up -d
+```
 
 The same credential covers Copilot model calls and GitHub pushes. Set
 `FACTORY_OFFLINE=true` for Copilot-only runs with no push.
 
 ```bash
-# Prepare host state + auth once
-sudo mkdir -p /var/lib/factory
-gh auth login && gh auth refresh --scopes copilot      # or: export GITHUB_TOKEN=...
+docker compose build
 
-# Standalone server on :7788 (dashboard + REST + webhook)
-docker compose up -d --build
+# Standalone server on http://localhost:7788 (dashboard + REST + webhook)
+docker compose up -d
 
 # One-shot build via the CLI (same image)
 docker compose run --rm factory new "a pastebin API with expiring snippets" \
@@ -422,9 +429,17 @@ docker compose run --rm factory new "a pastebin API with expiring snippets" \
 docker compose --profile workers up -d --scale worker=3
 ```
 
-State (`/var/lib/factory/.factory`) and generated apps
-(`/var/lib/factory/workspaces`) persist on the host. Keep cloud deploy off
-(`FACTORY_DEPLOY=false`) unless you also mount `azd`/AWS credentials.
+State and generated apps persist in the `factory-data` volume; the login persists
+in `gh-config`. Keep cloud deploy off (`FACTORY_DEPLOY=false`) unless you also
+mount `azd`/AWS credentials.
+
+**Running generated apps in-container (verify/deploy):** on a **Linux** host, add
+`network_mode: host` and swap the `factory-data` volume for an identical
+`/var/lib/factory:/var/lib/factory` bind (both noted in the compose file) so the
+verify probe reaches the app on `localhost` and the daemon can read each build
+context. On **Docker Desktop (Windows/macOS)** host networking isn't available —
+use the documented **dind** profile for those stages, or run them on a Linux host.
+The `serve`/CLI/`login`/scan paths need none of this.
 
 ## Configuration
 
