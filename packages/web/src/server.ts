@@ -9,7 +9,7 @@ const PUBLIC_DIR = resolve(__dirname, "..", "public");
 export async function startServer(): Promise<void> {
   const factory = new Factory();
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: "5mb" }));
   app.use(express.static(PUBLIC_DIR));
 
   // --- REST -----------------------------------------------------------------
